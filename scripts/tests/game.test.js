@@ -3,7 +3,9 @@
  */
 
 const { test, expect, beforeAll, afterEach } = require("@jest/globals");
-const { game, newGame, showScore, addTurn } = require("../game");
+const { game, newGame, showScore, addTurn, lightsOn, showTurns, playerTurn } = require("../game");
+
+jest.spyOn(window, "alert").mockImplementation(() => { });
 
 beforeAll(() => {
     let fs = require("fs");
@@ -29,6 +31,9 @@ describe("game object contains correct keys", () => {
     test("choices contains the correct IDs", () => {
         expect(game.choices).toEqual(["button1", "button2", "button3", "button4"]);
     });
+    test("turnNumber key exists", () => {
+        expect("turnNumber" in game).toBe(true);
+    });
 });
 
 describe("newGame works correctly", () => {
@@ -36,7 +41,7 @@ describe("newGame works correctly", () => {
         game.score = 42;
         game.currentGame = ["button1", "button2"];
         game.playerMoves = ["button1", "button2"];
-        document.getElementById("score").value = 42;
+        document.getElementById("score").innerText = 42;
         newGame()
     });
     test("should set game score to zero", () => {
@@ -49,7 +54,13 @@ describe("newGame works correctly", () => {
         expect(game.playerMoves.length).toBe(0);        
     });
     test("should display 0 for element with ID of 'score'", () => {
-        expect(document.getElementById("score").value).toEqual(0);        
+        expect(document.getElementById("score").innerText).toEqual(0);        
+    });
+    test("expect data-listener to be true", () => {
+        const elements = document.getElementsByClassName("circle");
+        for (let element of elements) {
+           expect(element.getAttribute("data-listener")).toEqual("true");
+        }
     });
 });
 
@@ -74,4 +85,19 @@ describe("gameplay works correctly", () => {
         lightsOn(game.currentGame[0]);
         expect(button.classList).toContain("light");
     });
+    test("showTurns should update game turn number", () => {
+        game.turnNumber = 42;
+        showTurns();
+        expect(game.turnNumber).toBe(0);
+    });
+    test("should increment if the turn is correct", () => {
+        game.playerMoves.push(game.currentGame[0]);
+        playerTurn();
+        expect(game.score).toBe(1);
+    });
+    test("should call an alert if the move is wrong", () => {
+        game.playerMoves.push("wrong");
+        playerTurn();
+        expect(window.alert).toBeCalledWith("Wrong move!");
+    });    
 });
